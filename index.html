@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام درجات الطلاب</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            direction: rtl;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .hidden {
+            display: none;
+        }
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .student-item button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+        .student-item button:hover {
+            background-color: #e53935;
+        }
+        
+        .student-item .edit-btn {
+            background-color: #2196F3;
+        }
+        
+        .student-item .edit-btn:hover {
+            background-color: #1976D2;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px;
+                padding: 15px;
+            }
+            .student-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .back-btn {
+            background-color: #2196F3;
+            color: white;
+            width: auto;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="login-form">
+        <h2>تسجيل الدخول</h2>
+        <input type="text" id="student-code" placeholder="أدخل رمز الدخول">
+        <button onclick="login()">تسجيل الدخول</button>
+        <div id="login-error" class="message">رمز الدخول غير صحيح!</div>
+    </div>
+
+    <div class="container hidden" id="admin-form">
+        <h2>إضافة طالب جديد (وضع المشرف)</h2>
+        <input type="text" id="student-name" placeholder="اسم الطالب">
+        <input type="text" id="student-code-input" placeholder="رمز الدخول للطالب">
+        <input type="text" id="grade-islamic" placeholder="درجة الإسلامية">
+        <input type="text" id="grade-computer" placeholder="درجة الحاسوب">
+        <input type="text" id="grade-math" placeholder="درجة الرياضيات">
+        <input type="text" id="grade-english" placeholder="درجة الإنجليزية">
+        <input type="text" id="grade-physics" placeholder="درجة الفيزياء">
+        <input type="text" id="grade-biology" placeholder="درجة الأحياء">
+        <input type="text" id="grade-chemistry" placeholder="درجة الكيمياء">
+        <button onclick="addStudent()">إضافة الطالب</button>
+        <h3>قائمة الطلاب</h3>
+        <div id="student-list"></div>
+        <div id="admin-error" class="message"></div>
+        <button class="back-btn" onclick="backToNormal()">رجوع للوضع العادي</button>
+    </div>
+
+    <script>
+        let students = JSON.parse(localStorage.getItem('students')) || [
+            {
+                name: "أحمد", code: "1234",
+                grades: { islamic: 95, computer: 90, math: 85, english: 88, physics: 80, biology: 92, chemistry: 87 }
+            },
+            {
+                name: "سارة", code: "5678",
+                grades: { islamic: 85, computer: 78, math: 92, english: 90, physics: 75, biology: 88, chemistry: 84 }
+            }
+        ];
+
+        function login() {
+            const code = document.getElementById('student-code').value;
+            const student = students.find(s => s.code === code);
+
+            if (student) {
+                let grades = `
+                    الإسلامية: ${student.grades.islamic}
+                    | الحاسوب: ${student.grades.computer}
+                    | الرياضيات: ${student.grades.math}
+                    | الإنجليزية: ${student.grades.english}
+                    | الفيزياء: ${student.grades.physics}
+                    | الأحياء: ${student.grades.biology}
+                    | الكيمياء: ${student.grades.chemistry}
+                `;
+                showMessage(`مرحبًا ${student.name}, درجاتك هي:\n${grades}`);
+            } else if (code === "9999") {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('admin-form').classList.remove('hidden');
+                updateStudentList();
+            } else {
+                showMessage("رمز الدخول غير صحيح!");
+            }
+        }
+
+        function addStudent() {
+            const name = document.getElementById('student-name').value;
+            const code = document.getElementById('student-code-input').value;
+            
+            if (students.some(s => s.code === code)) {
+                showMessage("رمز الدخول هذا موجود بالفعل! يرجى اختيار رمز آخر.");
+                return;
+            }
+
+            const grades = {
+                islamic: parseInt(document.getElementById('grade-islamic').value),
+                computer: parseInt(document.getElementById('grade-computer').value),
+                math: parseInt(document.getElementById('grade-math').value),
+                english: parseInt(document.getElementById('grade-english').value),
+                physics: parseInt(document.getElementById('grade-physics').value),
+                biology: parseInt(document.getElementById('grade-biology').value),
+                chemistry: parseInt(document.getElementById('grade-chemistry').value)
+            };
+
+            if (name && code && Object.values(grades).every(g => !isNaN(g))) {
+                students.push({ name, code, grades });
+                localStorage.setItem('students', JSON.stringify(students));
+                updateStudentList();
+                showMessage("تمت إضافة الطالب بنجاح!");
+                clearForm();
+            } else {
+                showMessage("يرجى ملء جميع الحقول بدرجات صحيحة.");
+            }
+        }
+
+        function updateStudentList() {
+            const list = document.getElementById('student-list');
+            list.innerHTML = '';
+            students.forEach((student, index) => {
+                const studentItem = document.createElement('div');
+                studentItem.classList.add('student-item');
+                studentItem.innerHTML = `
+                    <span>${student.name}</span>
+                    <button class="edit-btn" onclick="editStudent(${index})">تعديل</button>
+                    <button onclick="deleteStudent(${index})">حذف</button>
+                `;
+                list.appendChild(studentItem);
+            });
+        }
+
+        function editStudent(index) {
+            const student = students[index];
+            const newName = prompt("أدخل اسم الطالب الجديد:", student.name);
+            const newCode = prompt("أدخل رمز الدخول الجديد:", student.code);
+            if (newName && newCode) {
+                students[index].name = newName;
+                students[index].code = newCode;
+                localStorage.setItem('students', JSON.stringify(students));
+                updateStudentList();
+                showMessage("تم تعديل بيانات الطالب بنجاح!");
+            }
+        }
+
+        function deleteStudent(index) {
+            if (confirm("هل أنت متأكد من حذف هذا الطالب؟")) {
+                students.splice(index, 1);
+                localStorage.setItem('students', JSON.stringify(students));
+                updateStudentList();
+            }
+        }
+
+        function backToNormal() {
+            document.getElementById('admin-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        }
+
+        function clearForm() {
+            document.getElementById('student-name').value = '';
+            document.getElementById('student-code-input').value = '';
+            document.getElementById('grade-islamic').value = '';
+            document.getElementById('grade-computer').value = '';
+            document.getElementById('grade-math').value = '';
+            document.getElementById('grade-english').value = '';
+            document.getElementById('grade-physics').value = '';
+            document.getElementById('grade-biology').value = '';
+            document.getElementById('grade-chemistry').value = '';
+        }
+
+        function showMessage(message) {
+            const messageDiv = document.getElementById('login-error') || document.getElementById('admin-error');
+            messageDiv.innerText = message;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
