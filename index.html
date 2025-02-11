@@ -1,151 +1,90 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام درجات الطلاب</title>
-  <script type="module">
-    // استيراد مكتبات Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام درجات الطلاب</title>
+    <script type="module">
+        // استيراد مكتبات Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js";
 
-    // إعدادات Firebase الخاصة بمشروعك
-    const firebaseConfig = {
-      apiKey: "AIzaSyCDbEkWmedvN_mXnNWnl8nTk5Y-CCA2ZqM",
-      authDomain: "irag-6dc1c.firebaseapp.com",
-      databaseURL: "https://irag-6dc1c-default-rtdb.firebaseio.com/",
-      projectId: "irag-6dc1c",
-      storageBucket: "irag-6dc1c.appspot.com",
-      messagingSenderId: "827731510069",
-      appId: "1:827731510069:web:90da03166c10715920c27c",
-      measurementId: "G-9FNLC2ZSRV"
-    };
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3x8wtqy2BTZCCUdt-TWpgwxjxC4SvO1s",
+            authDomain: "irag1-a584b.firebaseapp.com",
+            databaseURL: "https://irag1-a584b-default-rtdb.firebaseio.com",
+            projectId: "irag1-a584b",
+            storageBucket: "irag1-a584b.firebasestorage.app",
+            messagingSenderId: "267345537272",
+            appId: "1:267345537272:web:402bf29c7849001774730d",
+            measurementId: "G-0KRRGF9YB3"
+        };
 
-    // تهيئة Firebase
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+        // تهيئة Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-    // إضافة طالب جديد إلى قاعدة البيانات
-    function addStudent() {
-      const name = document.getElementById('student-name').value;
-      const code = document.getElementById('student-code-input').value;
-      const grades = {
-        islamic: parseInt(document.getElementById('grade-islamic').value),
-        computer: parseInt(document.getElementById('grade-computer').value),
-        math: parseInt(document.getElementById('grade-math').value),
-        english: parseInt(document.getElementById('grade-english').value),
-        physics: parseInt(document.getElementById('grade-physics').value),
-        biology: parseInt(document.getElementById('grade-biology').value),
-        chemistry: parseInt(document.getElementById('grade-chemistry').value)
-      };
+        // دالة لكتابة بيانات الطالب
+        function writeStudentData(studentId, name, grades) {
+            set(ref(database, 'students/' + studentId), {
+                name: name,
+                grades: grades
+            });
+        }
 
-      if (name && code && Object.values(grades).every(g => !isNaN(g))) {
-        const studentRef = push(ref(database, 'students'));
-        set(studentRef, { name, code, grades })
-          .then(() => {
-            alert("تمت إضافة الطالب بنجاح!");
-            clearForm();
-            updateStudentList();
-          })
-          .catch(error => {
-            alert("حدث خطأ أثناء إضافة الطالب: " + error.message);
-          });
-      } else {
-        alert("يرجى ملء جميع الحقول بدرجات صحيحة.");
-      }
-    }
+        // دالة لقراءة بيانات الطالب
+        function readStudentData(studentId) {
+            const dbRef = ref(getDatabase());
+            get(child(dbRef, 'students/' + studentId)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const student = snapshot.val();
+                    displayGrades(student);
+                } else {
+                    alert("لا توجد بيانات للطالب");
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+        }
 
-    // تحديث قائمة الطلاب
-    function updateStudentList() {
-      const list = document.getElementById('student-list');
-      list.innerHTML = ''; // مسح القائمة الحالية
+        // عرض درجات الطالب
+        function displayGrades(student) {
+            const grades = student.grades;
+            let gradesDisplay = `
+                الإسلامية: ${grades.islamic} |
+                الحاسوب: ${grades.computer} |
+                الرياضيات: ${grades.math} |
+                الإنجليزية: ${grades.english} |
+                الفيزياء: ${grades.physics} |
+                الأحياء: ${grades.biology} |
+                الكيمياء: ${grades.chemistry}
+            `;
+            alert(`مرحبًا ${student.name}, درجاتك هي:\n${gradesDisplay}`);
+        }
 
-      const studentsRef = ref(database, 'students');
-      onValue(studentsRef, (snapshot) => {
-        list.innerHTML = ''; // إعادة مسح القائمة قبل التحديث
-        snapshot.forEach((childSnapshot) => {
-          const student = childSnapshot.val();
-          const studentItem = document.createElement('div');
-          studentItem.classList.add('student-item');
-          studentItem.innerHTML = `
-            <span>${student.name} - رمز الدخول: ${student.code}</span>
-          `;
-          list.appendChild(studentItem);
+        // تنفيذ الكود بعد تحميل الصفحة
+        document.addEventListener("DOMContentLoaded", () => {
+            // إضافة بيانات طالب جديد (سيتم إضافة بيانات الطالب تلقائيًا عند تحميل الصفحة)
+            writeStudentData("1234", "أحمد", {
+                islamic: 95,
+                computer: 90,
+                math: 85,
+                english: 88,
+                physics: 80,
+                biology: 92,
+                chemistry: 87
+            });
+
+            // قراءة بيانات الطالب مع المعرف 1234 عند تحميل الصفحة
+            readStudentData("1234");
         });
-      });
-    }
 
-    // تنظيف حقول الإدخال
-    function clearForm() {
-      document.getElementById('student-name').value = '';
-      document.getElementById('student-code-input').value = '';
-      document.getElementById('grade-islamic').value = '';
-      document.getElementById('grade-computer').value = '';
-      document.getElementById('grade-math').value = '';
-      document.getElementById('grade-english').value = '';
-      document.getElementById('grade-physics').value = '';
-      document.getElementById('grade-biology').value = '';
-      document.getElementById('grade-chemistry').value = '';
-    }
-
-    // تحديث قائمة الطلاب عند تحميل الصفحة
-    window.onload = updateStudentList;
-  </script>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      direction: rtl;
-      text-align: center;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 50px auto;
-      padding: 20px;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      border-radius: 10px;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .student-item {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-  </style>
+    </script>
 </head>
 <body>
-  <div class="container">
     <h1>نظام درجات الطلاب</h1>
-    <h2>إضافة طالب جديد</h2>
-    <input type="text" id="student-name" placeholder="اسم الطالب">
-    <input type="text" id="student-code-input" placeholder="رمز الدخول للطالب">
-    <input type="text" id="grade-islamic" placeholder="درجة الإسلامية">
-    <input type="text" id="grade-computer" placeholder="درجة الحاسوب">
-    <input type="text" id="grade-math" placeholder="درجة الرياضيات">
-    <input type="text" id="grade-english" placeholder="درجة الإنجليزية">
-    <input type="text" id="grade-physics" placeholder="درجة الفيزياء">
-    <input type="text" id="grade-biology" placeholder="درجة الأحياء">
-    <input type="text" id="grade-chemistry" placeholder="درجة الكيمياء">
-    <button onclick="addStudent()">إضافة الطالب</button>
-
-    <h3>قائمة الطلاب</h3>
-    <div id="student-list"></div>
-  </div>
+    <p>سيتم إضافة البيانات إلى Firebase وعرضها هنا.</p>
+    <!-- أضف المزيد من المحتوى هنا حسب الحاجة -->
 </body>
 </html>
